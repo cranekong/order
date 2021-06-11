@@ -1,5 +1,6 @@
 package cn.itcast.microservice.order.service;
 
+import cn.itcast.microservice.order.feign.ItemFeignClient;
 import cn.itcast.microservice.order.pojo.Item;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,10 @@ public class ItemService {
     @Autowired
     private DiscoveryClient discoveryClient;
 
+    @Autowired
+    private ItemFeignClient itemFeignClient;
+
+//  初始版本
     /*public Item queryItemById(Long id) {
         String serviceId = "itcast-microservice-item";
         List<ServiceInstance> instances = this.discoveryClient.getInstances(serviceId);
@@ -32,11 +37,19 @@ public class ItemService {
         return this.restTemplate.getForObject("http://" + url + "/item/" + id, Item.class);
     }*/
 
-    @HystrixCommand(fallbackMethod = "queryItemByIdFallbackMethod") // 进行容错处理
+// 升级版本
+    /*@HystrixCommand(fallbackMethod = "queryItemByIdFallbackMethod") // 进行容错处理
      public Item queryItemById(Long id) {
         String serviceId = "itcast-microservice-item";
         return this.restTemplate.getForObject("http://" + serviceId + "/item/" + id, Item.class);
+    }*/
+
+    // 再次升级
+    @HystrixCommand(fallbackMethod = "queryItemByIdFallbackMethod") // 进行容错处理
+    public Item queryItemById(Long id) {
+        return this.itemFeignClient.queryItemById(id);
     }
+
     public Item queryItemByIdFallbackMethod(Long id){ // 请求失败执行的方法
         return new Item(id, "查询商品信息出错!", null, null, null);
     }
